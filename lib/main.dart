@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'widgets/folder_selection_button.dart';
 import 'widgets/script_output_text_field.dart';
