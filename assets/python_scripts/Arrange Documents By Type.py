@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 def remove_read_only_flag(file_path):
     os.chmod(file_path, os.stat(file_path).st_mode | 0o666)
@@ -82,6 +83,9 @@ def move_documents(root_dir):
     delete_empty_folders(root_dir)
     
 
-root_directory = "C:\\Users\\ketan\\Downloads"
-
-move_documents(root_directory)
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        root_directory = sys.argv[1]
+        move_documents(root_directory)
+    else:
+        print("No folder path provided.")

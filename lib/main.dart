@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -38,6 +39,10 @@ class _ScriptRunnerState extends State<ScriptRunner> {
   String? selectedScript;
   TextEditingController outputController = TextEditingController();
   final String scriptFolderPath = 'assets/python_scripts';
+  
+   // Initialize the folderPathToPass variable with an empty value
+  String folderPathToPass = '';
+
 
   @override
   void initState() {
@@ -45,7 +50,7 @@ class _ScriptRunnerState extends State<ScriptRunner> {
     loadPythonScripts();
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
@@ -82,10 +87,41 @@ class _ScriptRunnerState extends State<ScriptRunner> {
               labelText: 'Script Output',
             ),
           ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: _selectFolder, // Set onPressed to the _selectFolder function
+            child: const Text('Select Folder to Process'),
+          ),
         ],
       ),
     );
   }
+
+
+     // Add the _selectFolder function to handle folder selection
+  Future<void> _selectFolder() async {
+    try {
+      String? selectedDirectoryPath = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Select a folder to process');
+      if (selectedDirectoryPath != null) {
+        setState(() {
+          folderPathToPass = selectedDirectoryPath;
+          outputController.text = ''; // Clear the output TextField
+        });
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Folder selected: $folderPathToPass')));
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No folder selected')));
+      }
+    } catch (e) {
+      setState(() {
+        outputController.text = 'Error selecting folder: $e';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error selecting folder: $e')));
+    }
+  }
+
+
 
   void loadPythonScripts() async {
     final manifestContent = await rootBundle.loadString('AssetManifest.json');
@@ -105,7 +141,7 @@ class _ScriptRunnerState extends State<ScriptRunner> {
   void _runSelectedScript() async {
     if (selectedScript != null) {
       String scriptFullPath = '$scriptFolderPath/${selectedScript!}';
-      Process process = await Process.start('python', [scriptFullPath]);
+      Process process = await Process.start('python', [scriptFullPath, folderPathToPass]);
 
       outputController.text = '';
 
