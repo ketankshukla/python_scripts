@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,7 +29,6 @@ class ScriptRunner extends StatefulWidget {
   const ScriptRunner({super.key});
 
   @override
-  
   // ignore: library_private_types_in_public_api
   _ScriptRunnerState createState() => _ScriptRunnerState();
 }
@@ -37,7 +37,7 @@ class _ScriptRunnerState extends State<ScriptRunner> {
   List<String> pythonScripts = [];
   String? selectedScript;
   TextEditingController outputController = TextEditingController();
-  final String scriptFolderPath = 'D:/Python Scripts';
+  final String scriptFolderPath = 'assets/python_scripts';
 
   @override
   void initState() {
@@ -88,22 +88,26 @@ class _ScriptRunnerState extends State<ScriptRunner> {
   }
 
   void loadPythonScripts() async {
-    final scriptDirectory = Directory(scriptFolderPath);
-    List<FileSystemEntity> files = await scriptDirectory.list().toList();
+    final manifestContent = await rootBundle.loadString('AssetManifest.json');
+    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+    final scriptPaths = manifestMap.keys
+        .where((String key) => key.startsWith(scriptFolderPath) && key.endsWith('.py'))
+        .toList();
+
     setState(() {
-      pythonScripts = files
-          .where((file) => file is File && file.path.endsWith('.py'))
-          .map((file) => file.uri.pathSegments.last)
+      pythonScripts = scriptPaths
+          .map((path) => path.split('/').last)
           .toList();
     });
-}
+  }
 
   void _runSelectedScript() async {
     if (selectedScript != null) {
       String scriptFullPath = '$scriptFolderPath/${selectedScript!}';
       Process process = await Process.start('python', [scriptFullPath]);
 
-      outputController.text = ''; 
+      outputController.text = '';
 
       process.stdout.transform(utf8.decoder).listen((data) {
         setState(() {
@@ -128,5 +132,4 @@ class _ScriptRunnerState extends State<ScriptRunner> {
       }
     }
   }
-
 }
