@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'widgets/folder_selection_button.dart';
+import 'widgets/script_output_text_field.dart';
+import 'widgets/script_selection_dropdown.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,10 +43,9 @@ class _ScriptRunnerState extends State<ScriptRunner> {
   String? selectedScript;
   TextEditingController outputController = TextEditingController();
   final String scriptFolderPath = 'assets/python_scripts';
-  
-   // Initialize the folderPathToPass variable with an empty value
-  String folderPathToPass = '';
 
+  // Initialize the folderPathToPass variable with an empty value
+  String folderPathToPass = '';
 
   @override
   void initState() {
@@ -51,32 +53,28 @@ class _ScriptRunnerState extends State<ScriptRunner> {
     loadPythonScripts();
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _selectFolder, // Set onPressed to the _selectFolder function
-            child: const Text('Select Folder to Process'),
-          ),
+          FolderSelectionButton(onSelectFolder: (path) {
+            setState(() {
+              folderPathToPass = path;
+              outputController.text = ''; // Clear the output TextField
+            });
+          }),
           const Text('Select a Python script from the list:'),
-          DropdownButton<String>(
-            value: selectedScript,
-            items: pythonScripts.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
+          ScriptSelectionDropdown(
+            pythonScripts: pythonScripts,
+            selectedScript: selectedScript,
             onChanged: (String? newValue) {
               setState(() {
                 selectedScript = newValue;
               });
             },
-            hint: const Text('Select a script'),
           ),
           const SizedBox(height: 10),
           ElevatedButton(
@@ -84,66 +82,59 @@ class _ScriptRunnerState extends State<ScriptRunner> {
             child: const Text('Run Selected Script'),
           ),
           const SizedBox(height: 10),
-          TextField(
-            controller: outputController,
-            readOnly: true,
-            maxLines: 10,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Script Output',
-            ),
-          ),
-          
+          ScriptOutputTextField(controller: outputController),
         ],
       ),
     );
   }
 
 
-     // Add the _selectFolder function to handle folder selection
+  // ignore: unused_element
   Future<void> _selectFolder() async {
     try {
-      String? selectedDirectoryPath = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Select a folder to process');
+      String? selectedDirectoryPath = await FilePicker.platform
+          .getDirectoryPath(dialogTitle: 'Select a folder to process');
       if (selectedDirectoryPath != null) {
         setState(() {
           folderPathToPass = selectedDirectoryPath;
           outputController.text = ''; // Clear the output TextField
         });
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Folder selected: $folderPathToPass')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Folder selected: $folderPathToPass')));
       } else {
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No folder selected')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('No folder selected')));
       }
     } catch (e) {
       setState(() {
         outputController.text = 'Error selecting folder: $e';
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error selecting folder: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error selecting folder: $e')));
     }
   }
-
-
 
   void loadPythonScripts() async {
     final manifestContent = await rootBundle.loadString('AssetManifest.json');
     final Map<String, dynamic> manifestMap = json.decode(manifestContent);
 
     final scriptPaths = manifestMap.keys
-        .where((String key) => key.startsWith(scriptFolderPath) && key.endsWith('.py'))
+        .where((String key) =>
+            key.startsWith(scriptFolderPath) && key.endsWith('.py'))
         .toList();
 
     setState(() {
-      pythonScripts = scriptPaths
-          .map((path) => path.split('/').last)
-          .toList();
+      pythonScripts = scriptPaths.map((path) => path.split('/').last).toList();
     });
   }
 
   void _runSelectedScript() async {
     if (selectedScript != null) {
       String scriptFullPath = '$scriptFolderPath/${selectedScript!}';
-      Process process = await Process.start('python', [scriptFullPath, folderPathToPass]);
+      Process process =
+          await Process.start('python', [scriptFullPath, folderPathToPass]);
 
       outputController.text = '';
 
@@ -165,7 +156,8 @@ class _ScriptRunnerState extends State<ScriptRunner> {
         });
       } else {
         setState(() {
-          outputController.text += 'Python script execution failed with exit code $exitCode\n';
+          outputController.text +=
+              'Python script execution failed with exit code $exitCode\n';
         });
       }
     }
