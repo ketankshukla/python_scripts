@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 
 Future<Map<String, String>> runSelectedScript(
     String scriptFolderPath, String selectedScript, String folderPathToPass) async {
