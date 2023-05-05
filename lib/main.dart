@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Python Script Runner'),
@@ -56,6 +57,11 @@ class _ScriptRunnerState extends State<ScriptRunner> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: _selectFolder, // Set onPressed to the _selectFolder function
+            child: const Text('Select Folder to Process'),
+          ),
           const Text('Select a Python script from the list:'),
           DropdownButton<String>(
             value: selectedScript,
@@ -87,11 +93,7 @@ class _ScriptRunnerState extends State<ScriptRunner> {
               labelText: 'Script Output',
             ),
           ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _selectFolder, // Set onPressed to the _selectFolder function
-            child: const Text('Select Folder to Process'),
-          ),
+          
         ],
       ),
     );
